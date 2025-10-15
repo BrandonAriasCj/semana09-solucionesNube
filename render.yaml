@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: semana09-SNube-Arias
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn semana09.wsgi:application --bind 0.0.0.0:$PORT"

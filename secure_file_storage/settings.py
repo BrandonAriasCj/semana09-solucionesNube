@@ -14,6 +14,8 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
+ALLOWED_HOSTS = ['.onrender.com', 'localhost', '127.0.0.1']
+
 # Load environment variables from .env file
 load_dotenv()
 
