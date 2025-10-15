@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block title %}Panel de Administración{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">
+                        <i class="fas fa-cogs"></i>
+                        Panel de Administración
+                    </h3>
+                </div>
+                <div class="card-body">
+                    
+                    <!-- Información de configuración -->
+                    <div class="mb-4">
+                        <h5>Configuración Actual</h5>
+                        {% if config %}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Bucket Principal:</strong> {{ config.bucket_name }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Bucket de Backup:</strong> 
+                                        {% if config.backup_bucket %}
+                                            {{ config.backup_bucket }}
+                                        {% else %}
+                                            <span class="text-muted">No configurado</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                No se pudo cargar la configuración del sistema.
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Sección de Backup -->
+                    <div class="mb-4">
+                        <h5>Operaciones de Backup</h5>
+                        <p class="text-muted">
+                            Realiza una copia de seguridad de todas las imágenes del bucket principal al bucket de backup.
+                        </p>
+                        
+                        {% if config and config.backup_bucket %}
+                            <button id="backup-btn" class="btn btn-primary btn-lg">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                Iniciar Backup
+                            </button>
+                        {% else %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                Para realizar backups, primero debe configurar un bucket de backup.
+                            </div>
+                            <a href="#" class="btn btn-secondary">
+                                <i class="fas fa-cog"></i>
+                                Configurar Bucket de Backup
+                            </a>
+                        {% endif %}
+                    </div>
+
+                    <!-- Área de resultados -->
+                    <div id="backup-results" class="mt-4" style="display: none;">
+                        <h6>Resultados del Backup</h6>
+                        <div id="backup-message"></div>
+                        <div id="backup-details" class="mt-3"></div>
+                    </div>
+
+                    <!-- Navegación -->
+                    <div class="mt-4 pt-3 border-top">
+                        <a href="{% url 'product_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i>
+                            Volver a Productos
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" role="dialog" aria-labelledby="loadingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">Cargando...</span>
+                </div>
+                <p class="mt-3 mb-0">Realizando backup...</p>
+                <small class="text-muted">Este proceso puede tomar varios minutos</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const backupBtn = document.getElementById('backup-btn');
+    const resultsDiv = document.getElementById('backup-results');
+    const messageDiv = document.getElementById('backup-message');
+    const detailsDiv = document.getElementById('backup-details');
+    const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+
+    if (backupBtn) {
+        backupBtn.addEventListener('click', function() {
+            // Mostrar modal de carga
+            loadingModal.show();
+            
+            // Deshabilitar botón
+            backupBtn.disabled = true;
+            backupBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+            
+            // Ocultar resultados anteriores
+            resultsDiv.style.display = 'none';
+            
+            // Realizar petición AJAX
+            fetch('{% url "admin_backup" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Ocultar modal de carga
+                loadingModal.hide();
+                
+                // Mostrar resultados
+                resultsDiv.style.display = 'block';
+                
+                if (data.success) {
+                    if (data.warning) {
+                        messageDiv.innerHTML = `
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                ${data.message}
+                            </div>
+                        `;
+                    } else {
+                        messageDiv.innerHTML = `
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i>
+                                ${data.message}
+                            </div>
+                        `;
+                    }
+                    
+                    // Mostrar detalles si hay archivos fallidos
+                    if (data.results && data.results.failed_files && data.results.failed_files.length > 0) {
+                        let failedHtml = '<div class="mt-3"><h6>Archivos que no pudieron copiarse:</h6><ul class="list-group">';
+                        data.results.failed_files.forEach(file => {
+                            failedHtml += `<li class="list-group-item list-group-item-warning">
+                                <strong>${file.key}</strong><br>
+                                <small class="text-muted">${file.error}</small>
+                            </li>`;
+                        });
+                        failedHtml += '</ul></div>';
+                        detailsDiv.innerHTML = failedHtml;
+                    } else {
+                        detailsDiv.innerHTML = '';
+                    }
+                } else {
+                    messageDiv.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle"></i>
+                            ${data.error}
+                        </div>
+                    `;
+                    detailsDiv.innerHTML = '';
+                }
+            })
+            .catch(error => {
+                // Ocultar modal de carga
+                loadingModal.hide();
+                
+                // Mostrar error
+                resultsDiv.style.display = 'block';
+                messageDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle"></i>
+                        Error de conexión: ${error.message}
+                    </div>
+                `;
+                detailsDiv.innerHTML = '';
+            })
+            .finally(() => {
+                // Rehabilitar botón
+                backupBtn.disabled = false;
+                backupBtn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Iniciar Backup';
+            });
+        });
+    }
+});
+</script>
+
+{% csrf_token %}
+{% endblock %}

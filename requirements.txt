@@ -1,0 +1,4 @@
+Django==5.2.7
+boto3==1.40.51
+Pillow==11.3.0
+whitenoise==6.6.0

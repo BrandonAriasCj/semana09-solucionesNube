@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Lista de Productos - {{ block.super }}{% endblock %}
+
+{% block header %}Lista de Productos{% endblock %}
+
+{% block content %}
+    <div class="mb-3">
+        <h2>Productos</h2>
+        <a href="/product/add/" class="btn">Agregar Nuevo Producto</a>
+    </div>
+
+    {% if products %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Imagen</th>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Precio</th>
+                    <th>Fecha de Creación</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                    <tr>
+                        <td>
+                            {% if product.image %}
+                                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-image">
+                            {% else %}
+                                <span style="color: #6c757d;">Sin imagen</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ product.name }}</td>
+                        <td>{{ product.description|truncatewords:10 }}</td>
+                        <td>${{ product.price }}</td>
+                        <td>{{ product.created_at|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            <div class="actions">
+                                <a href="/product/{{ product.id }}/edit/" class="btn btn-secondary">Editar</a>
+                                <a href="/product/{{ product.id }}/delete/" class="btn btn-danger">Eliminar</a>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="text-center mt-3">
+            <p style="color: #6c757d; font-size: 1.2rem;">No hay productos registrados.</p>
+            <a href="/product/add/" class="btn mt-3">Agregar el Primer Producto</a>
+        </div>
+    {% endif %}
+{% endblock %}

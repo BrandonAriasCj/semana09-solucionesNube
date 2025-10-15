@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Eliminar Producto - {{ block.super }}{% endblock %}
+
+{% block header %}Confirmar Eliminación{% endblock %}
+
+{% block content %}
+    <div style="text-align: center;">
+        <h2 style="color: #e74c3c; margin-bottom: 1.5rem;">¿Eliminar Producto?</h2>
+        
+        <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 1.5rem; margin-bottom: 2rem;">
+            <p style="color: #856404; font-size: 1.1rem; margin-bottom: 1rem;">
+                <strong>⚠️ Esta acción no se puede deshacer</strong>
+            </p>
+            <p style="color: #856404;">
+                Se eliminará el producto y su imagen asociada de AWS S3.
+            </p>
+        </div>
+
+        <div style="background-color: #f8f9fa; border-radius: 8px; padding: 2rem; margin-bottom: 2rem; text-align: left;">
+            <h3 style="margin-bottom: 1rem; color: #495057;">Detalles del Producto:</h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1rem; align-items: start;">
+                {% if product.image %}
+                    <div>
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" 
+                             style="max-width: 150px; height: auto; border-radius: 4px; border: 1px solid #ddd;">
+                    </div>
+                {% endif %}
+                
+                <div>
+                    <p><strong>Nombre:</strong> {{ product.name }}</p>
+                    <p><strong>Precio:</strong> ${{ product.price }}</p>
+                    <p><strong>Descripción:</strong> {{ product.description|default:"Sin descripción" }}</p>
+                    <p><strong>Creado:</strong> {{ product.created_at|date:"d/m/Y H:i" }}</p>
+                    {% if product.image %}
+                        <p><strong>Imagen:</strong> {{ product.image.name }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <form method="post" style="display: inline-block;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger" style="margin-right: 1rem;">
+                Sí, Eliminar Producto
+            </button>
+        </form>
+        
+        <a href="/" class="btn btn-secondary">
+            Cancelar
+        </a>
+
+        <div style="margin-top: 2rem; padding: 1rem; background-color: #f8d7da; border-radius: 4px; color: #721c24;">
+            <small>
+                <strong>Nota:</strong> La eliminación incluye:
+                <ul style="text-align: left; margin-top: 0.5rem;">
+                    <li>Registro del producto en la base de datos</li>
+                    <li>Archivo de imagen en AWS S3</li>
+                </ul>
+            </small>
+        </div>
+    </div>
+{% endblock %}

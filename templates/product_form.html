@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if product.pk %}Editar Producto{% else %}Agregar Producto{% endif %} - {{ block.super }}
+{% endblock %}
+
+{% block header %}
+    {% if product.pk %}Editar Producto{% else %}Agregar Nuevo Producto{% endif %}
+{% endblock %}
+
+{% block content %}
+    <h2>
+        {% if product.pk %}
+            Editar: {{ product.name }}
+        {% else %}
+            Agregar Nuevo Producto
+        {% endif %}
+    </h2>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="{{ form.name.id_for_label }}">Nombre del Producto:</label>
+            {{ form.name }}
+            {% if form.name.errors %}
+                <div style="color: #e74c3c; margin-top: 0.25rem;">
+                    {% for error in form.name.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.description.id_for_label }}">Descripción:</label>
+            {{ form.description }}
+            {% if form.description.errors %}
+                <div style="color: #e74c3c; margin-top: 0.25rem;">
+                    {% for error in form.description.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.price.id_for_label }}">Precio:</label>
+            {{ form.price }}
+            {% if form.price.errors %}
+                <div style="color: #e74c3c; margin-top: 0.25rem;">
+                    {% for error in form.price.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.image.id_for_label }}">Imagen del Producto:</label>
+            {{ form.image }}
+            {% if form.image.errors %}
+                <div style="color: #e74c3c; margin-top: 0.25rem;">
+                    {% for error in form.image.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% if product.pk and product.image %}
+                <div style="margin-top: 1rem;">
+                    <p><strong>Imagen actual:</strong></p>
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" style="max-width: 200px; height: auto; border-radius: 4px;">
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <button type="submit" class="btn">
+                {% if product.pk %}Actualizar Producto{% else %}Crear Producto{% endif %}
+            </button>
+            <a href="/" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+
+    {% if product.pk %}
+        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #ddd;">
+            <h3>Información del Producto</h3>
+            <p><strong>Creado:</strong> {{ product.created_at|date:"d/m/Y H:i" }}</p>
+            {% if product.image %}
+                <p><strong>URL de imagen:</strong> <a href="{{ product.image.url }}" target="_blank">{{ product.image.url }}</a></p>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endblock %}
